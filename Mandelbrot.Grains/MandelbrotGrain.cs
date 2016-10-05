@@ -60,8 +60,17 @@ namespace Mandelbrot.Grains
                         var tx = x1 + (dx * pixelSize);
                         var ty = y1 + (dy * pixelSize);
                         var position = ((dx * 4) + (dy * bData.Stride));
+
+                        var value = GetColour(tx, ty);
                         data[position + 3] = 255; // set opacity 100%
-                        data[position + 2] = (byte) GetColour(tx, ty);
+                        if (value >= 0)
+                        {
+
+                            data[position] = (byte)(255 - Math.Floor(255 * Math.Sin(value * Math.PI / 255)));
+                            data[position + 2] = (byte)Math.Floor(255 * Math.Sin(value * Math.PI / 255));
+                            data[position + 1] = (byte)(255 - value);
+                        }
+                      
                         //bitmap.SetPixel(dx, dy, GetColour(tx, ty));
                     }
                 }
@@ -90,8 +99,10 @@ namespace Mandelbrot.Grains
 
             //Start iterating the with the complex number to determine it's escape time (mandelValue)
             int mandelValue = 0;
-            while (multZre + multZim < 4 && mandelValue < 255)
+            while (mandelValue < 255)
             {
+                if (multZre + multZim >= 4) return mandelValue;
+
                 /*The new real part equals re(z)^2 - im(z)^2 + re(c), we store it in a temp variable
                 tempRe because we still need re(z) in the next calculation
                     */
@@ -113,7 +124,7 @@ namespace Mandelbrot.Grains
                 //Increase the mandelValue by one, because the iteration is now finished.
                 mandelValue++;
             }
-            return 255 - mandelValue;
+            return -1;
         }
 
         public Task<byte[]> Get()
