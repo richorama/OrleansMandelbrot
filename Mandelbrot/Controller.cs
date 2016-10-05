@@ -34,9 +34,7 @@ namespace Mandelbrot
 
         async Task GetTile(IOwinContext context, IDictionary<string, string> parameters)
         {
-
             var grainKey = parameters["key"];
-
             var grain = this.ProviderRuntime.GrainFactory.GetGrain<IMandelbrotGrain>(grainKey);
 
             var result = await Dispatch(async () =>

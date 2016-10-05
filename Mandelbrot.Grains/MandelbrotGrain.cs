@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -29,7 +30,6 @@ namespace Mandelbrot.Grains
 
         public override Task OnActivateAsync()
         {
-        
             var key = this.GetPrimaryKeyString();
             Console.WriteLine(key);
             var parts = key.Split('_').Select(Int64.Parse).ToArray();
@@ -43,8 +43,14 @@ namespace Mandelbrot.Grains
             var y1 = (MAX_Y - MIN_Y) * (y - (numberOfTiles / 2)) / numberOfTiles;
             var pixelSize = (MAX_X - MIN_X) / (numberOfTiles * TILE_SIZE);
 
+            // consider moving bitmap rendering out to a stateless worker to reduce allocations
             using (var bitmap = new Bitmap(TILE_SIZE, TILE_SIZE))
             {
+                var bData = bitmap.LockBits(new Rectangle(0,0, TILE_SIZE, TILE_SIZE),ImageLockMode.WriteOnly,PixelFormat.Format32bppPArgb);
+
+                // allocate buffer for image
+                var data = new byte[bData.Stride * bData.Height];
+
                 for (var dx = 0; dx < TILE_SIZE; dx++)
                 {
                     for (var dy = 0; dy < TILE_SIZE; dy++)
@@ -53,10 +59,15 @@ namespace Mandelbrot.Grains
                         var tx = x1 + (dx * pixelSize);
                         var ty = y1 + (dy * pixelSize);
 
-                        // TODO: use faster technique for writing to the bitmap
-                        bitmap.SetPixel(dx, dy, GetColour(tx, ty));
+                        data[((dx * 4) + (dy * bData.Stride)) + 3] = 255;
+                        data[((dx * 4) + (dy * bData.Stride)) + 2] = (byte) GetColour(tx, ty);
+                        //bitmap.SetPixel(dx, dy, GetColour(tx, ty));
                     }
                 }
+
+                System.Runtime.InteropServices.Marshal.Copy(data, 0, bData.Scan0, data.Length);
+                bitmap.UnlockBits(bData);
+
                 using (var stream = new MemoryStream())
                 {
                     bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
@@ -67,7 +78,7 @@ namespace Mandelbrot.Grains
             return base.OnActivateAsync();
         }
 
-        Color GetColour(double re, double im)
+        int GetColour(double re, double im)
         {
             double zRe = 0;
             double zIm = 0;
@@ -101,7 +112,7 @@ namespace Mandelbrot.Grains
                 //Increase the mandelValue by one, because the iteration is now finished.
                 mandelValue++;
             }
-            return Color.FromArgb(255 - mandelValue, 0, 0);
+            return 255 - mandelValue;
         }
 
         public Task<byte[]> Get()

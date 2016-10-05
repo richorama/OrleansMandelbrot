@@ -38,12 +38,5 @@ namespace Mandelbrot
             }
         }
 
-        public static Task ReturnUnauthorised(this IOwinContext context)
-        {
-            context.Response.StatusCode = 401;
-            context.Response.ReasonPhrase = "Unauthorized";
-            context.Response.Headers.Add("WWW-Authenticate", new string[] { "Basic realm=\"Orleans\"" });
-            return Task.FromResult(0);
-        }
     }
 }

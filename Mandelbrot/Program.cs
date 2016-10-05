@@ -10,7 +10,6 @@ namespace Mandelbrot
     {
         static void Main(string[] args)
         {
-
             using (new DevSilo())
             {
                 Console.WriteLine("Press and key to continue...");
