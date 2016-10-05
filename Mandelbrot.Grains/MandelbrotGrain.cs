@@ -65,9 +65,9 @@ namespace Mandelbrot.Grains
                         data[position + 3] = 255; // set opacity 100%
                         if (value >= 0)
                         {
-
-                            data[position] = (byte)(255 - Math.Floor(255 * Math.Sin(value * Math.PI / 255)));
-                            data[position + 2] = (byte)Math.Floor(255 * Math.Sin(value * Math.PI / 255));
+                            var sinVal = Math.Floor(255 * Math.Sin(value * Math.PI / 255));
+                            data[position] = (byte)(255 - sinVal);
+                            data[position + 2] = (byte) sinVal;
                             data[position + 1] = (byte)(255 - value);
                         }
                       
