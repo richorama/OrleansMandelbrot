@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,7 +44,7 @@ namespace Mandelbrot.Grains
             var y1 = (MAX_Y - MIN_Y) * (y - (numberOfTiles / 2)) / numberOfTiles;
             var pixelSize = (MAX_X - MIN_X) / (numberOfTiles * TILE_SIZE);
 
-            // consider moving bitmap rendering out to a stateless worker to reduce allocations
+            // consider moving bitmap rendering out to a statels
             using (var bitmap = new Bitmap(TILE_SIZE, TILE_SIZE))
             {
                 var bData = bitmap.LockBits(new Rectangle(0,0, TILE_SIZE, TILE_SIZE),ImageLockMode.WriteOnly,PixelFormat.Format32bppPArgb);
@@ -58,19 +59,19 @@ namespace Mandelbrot.Grains
                         // calculate pixel value
                         var tx = x1 + (dx * pixelSize);
                         var ty = y1 + (dy * pixelSize);
-
-                        data[((dx * 4) + (dy * bData.Stride)) + 3] = 255;
-                        data[((dx * 4) + (dy * bData.Stride)) + 2] = (byte) GetColour(tx, ty);
+                        var position = ((dx * 4) + (dy * bData.Stride));
+                        data[position + 3] = 255; // set opacity 100%
+                        data[position + 2] = (byte) GetColour(tx, ty);
                         //bitmap.SetPixel(dx, dy, GetColour(tx, ty));
                     }
                 }
 
-                System.Runtime.InteropServices.Marshal.Copy(data, 0, bData.Scan0, data.Length);
+                Marshal.Copy(data, 0, bData.Scan0, data.Length);
                 bitmap.UnlockBits(bData);
 
                 using (var stream = new MemoryStream())
                 {
-                    bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                    bitmap.Save(stream, ImageFormat.Png);
                     bytes = stream.ToArray();
                 }
             }
@@ -94,7 +95,7 @@ namespace Mandelbrot.Grains
                 /*The new real part equals re(z)^2 - im(z)^2 + re(c), we store it in a temp variable
                 tempRe because we still need re(z) in the next calculation
                     */
-                double tempRe = multZre - multZim + re;
+                var tempRe = multZre - multZim + re;
 
                 /*The new imaginary part is equal to 2*re(z)*im(z) + im(c)
                     * Instead of multiplying these by 2 I add re(z) to itself and then multiply by im(z), which
