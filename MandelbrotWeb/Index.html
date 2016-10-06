@@ -27,7 +27,7 @@
 var maxDepth = 48; // precision is lost at any greater level
 var map = L.map('map').setView([0, 0], Math.min(2, maxDepth));
 window.map = map;
-var tilePath = "/tile/{x}_{y}_{z}"
+var tilePath = "/tile/{x}/{y}/{z}"
 L.tileLayer(tilePath, { attribution: '', maxZoom: maxDepth, minZoom: 1, noWrap: true }).addTo(map);
 
 

@@ -4,8 +4,7 @@
 
 This project allows you to explore the Mandelbrot fractal.
 
-Grains in [Orleans](http://dotnet.github.com/orleans) are used to generate lots of 256x256 PNG images which are served to
-a web page. [Leaflet](http://leafletjs.com/) is used to display these tiles to the user.
+This version doesn't use Orleans, it's just an MVC app.
 
 To run the project, press `F5` and open a browser at [http://localhost:8080](http://localhost:8080).
 

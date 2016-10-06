@@ -1,43 +1,25 @@
-﻿using Orleans;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.Web;
+using System.Web.Mvc;
 
-namespace Mandelbrot.Grains
+namespace MandelbrotWeb.Controllers
 {
-
-    public interface IMandelbrotGrain : IGrainWithStringKey
+    public class TileController : Controller
     {
-        Task<byte[]> Get();
-    }
-
-
-    public class MandelbrotGrain : Grain, IMandelbrotGrain
-    {
-        // coordinates should be a square to avoid distortion
         const double MIN_X = -2;
         const double MAX_X = 2;
         const double MIN_Y = -2;
         const double MAX_Y = 2;
         const int TILE_SIZE = 256;
 
-        byte[] bytes;
-
-        public override Task OnActivateAsync()
+        public ActionResult Get(Int64 x, Int64 y, Int64 z)
         {
-            var key = this.GetPrimaryKeyString();
-            Console.WriteLine(key);
-            var parts = key.Split('_').Select(Int64.Parse).ToArray();
-
-            var x = parts[0];
-            var y = parts[1];
-            var z = parts[2];
             var numberOfTiles = Math.Pow(2, z);
 
             var x1 = (MAX_X - MIN_X) * (x - (numberOfTiles / 2)) / numberOfTiles;
@@ -47,7 +29,7 @@ namespace Mandelbrot.Grains
             // consider moving bitmap rendering out to a statels
             using (var bitmap = new Bitmap(TILE_SIZE, TILE_SIZE))
             {
-                var bData = bitmap.LockBits(new Rectangle(0,0, TILE_SIZE, TILE_SIZE),ImageLockMode.WriteOnly,PixelFormat.Format32bppPArgb);
+                var bData = bitmap.LockBits(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE), ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
 
                 // allocate buffer for image
                 var data = new byte[bData.Stride * bData.Height];
@@ -67,26 +49,24 @@ namespace Mandelbrot.Grains
                         {
                             var sinVal = Math.Floor(255 * Math.Sin(value * Math.PI / 255));
                             data[position] = (byte)(255 - sinVal);
-                            data[position + 2] = (byte) sinVal;
+                            data[position + 2] = (byte)sinVal;
                             data[position + 1] = (byte)(255 - value);
                         }
-                      
+
                         //bitmap.SetPixel(dx, dy, GetColour(tx, ty));
                     }
                 }
 
                 Marshal.Copy(data, 0, bData.Scan0, data.Length);
                 bitmap.UnlockBits(bData);
-
-                using (var stream = new MemoryStream())
-                {
-                    bitmap.Save(stream, ImageFormat.Png);
-                    bytes = stream.ToArray();
-                }
+                var stream = new MemoryStream();
+                bitmap.Save(stream, ImageFormat.Png);
+                stream.Position = 0;
+                return new FileStreamResult(stream, "image/png");
             }
 
-            return base.OnActivateAsync();
         }
+
 
         int GetColour(double re, double im)
         {
@@ -125,11 +105,6 @@ namespace Mandelbrot.Grains
                 mandelValue++;
             }
             return -1;
-        }
-
-        public Task<byte[]> Get()
-        {
-            return Task.FromResult(bytes);
         }
     }
 }
