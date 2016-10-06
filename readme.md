@@ -11,6 +11,8 @@ To run the project, press `F5` and open a browser at [http://localhost:8080](htt
 
 The code has not been optimised. It was written over my lunch hour :¬)
 
+You can view an example of the project up at running at [http://ramandelbrot.azurewebsites.net/](http://ramandelbrot.azurewebsites.net/).
+
 ## License
 
 MIT
